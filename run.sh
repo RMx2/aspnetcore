@@ -22,6 +22,7 @@ ci=false
 package_version_props_url="${PB_PACKAGEVERSIONPROPSURL:-}"
 asset_root_url="${PB_ASSETROOTURL:-}"
 product_build_id="${PRODUCTBUILDID:-}"
+access_token_suffix=''
 msbuild_args=()
 
 #
