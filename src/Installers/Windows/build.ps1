@@ -7,8 +7,10 @@
 param(
     [string]$Configuration = 'Debug',
     [string]$BuildNumber = 't000',
-    [string]$PackageVersionPropsUrl = $env:PB_PackageVersionPropsUrl,
+    [string]$PackageVersionPropsUrl = $null,
     [string]$AccessTokenSuffix = $null,
+    [string]$AssetRootUrl = $null,
+    [string]$RestoreSources = $null,
     [switch]$clean
 )
 
@@ -40,9 +42,16 @@ try {
 
     [string[]] $msbuildArgs = @()
 
+    if ($AssetRootUrl) {
+        $msbuildArgs += "-p:DotNetAssetRootUrl=$AssetRootUrl"
+    }
+
+    if ($RestoreSources) {
+        $msbuildArgs += "-p:DotNetAdditionalRestoreSources=$RestoreSources"
+    }
+
     # PipeBuild parameters
     $msbuildArgs += "-p:SignType=${env:PB_SignType}"
-    $msbuildArgs += "-p:DotNetAssetRootUrl=${env:PB_AssetRootUrl}"
     $msbuildArgs += "-p:IsFinalBuild=${env:PB_IsFinalBuild}"
 
     if ($clean) {
