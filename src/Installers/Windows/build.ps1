@@ -3,7 +3,7 @@
 #
 
 #requires -version 5
-[cmdletbinding()]
+[CmdletBinding(PositionalBinding = $false)]
 param(
     [string]$Configuration = 'Debug',
     [string]$BuildNumber = 't000',
@@ -11,7 +11,9 @@ param(
     [string]$AccessTokenSuffix = $null,
     [string]$AssetRootUrl = $null,
     [string]$RestoreSources = $null,
-    [switch]$clean
+    [switch]$clean,
+    [Parameter(ValueFromRemainingArguments = $true)]
+    [string[]]$MSBuildArguments
 )
 
 $ErrorActionPreference = 'Stop'
@@ -40,26 +42,24 @@ try {
             "-p:Configuration=$Configuration"
     }
 
-    [string[]] $msbuildArgs = @()
-
     if ($AssetRootUrl) {
-        $msbuildArgs += "-p:DotNetAssetRootUrl=$AssetRootUrl"
+        $MSBuildArguments += "-p:DotNetAssetRootUrl=$AssetRootUrl"
     }
 
     if ($RestoreSources) {
-        $msbuildArgs += "-p:DotNetAdditionalRestoreSources=$RestoreSources"
+        $MSBuildArguments += "-p:DotNetAdditionalRestoreSources=$RestoreSources"
     }
 
     # PipeBuild parameters
-    $msbuildArgs += "-p:SignType=${env:PB_SignType}"
-    $msbuildArgs += "-p:IsFinalBuild=${env:PB_IsFinalBuild}"
+    $MSBuildArguments += "-p:SignType=${env:PB_SignType}"
+    $MSBuildArguments += "-p:IsFinalBuild=${env:PB_IsFinalBuild}"
 
     if ($clean) {
-        $msbuildArgs += '-t:Clean'
+        $MSBuildArguments += '-t:Clean'
     }
 
     if ($AccessTokenSuffix) {
-        $msbuildArgs += "-p:DotNetAccessTokenSuffix=$AccessTokenSuffix"
+        $MSBuildArguments += "-p:DotNetAccessTokenSuffix=$AccessTokenSuffix"
     }
 
     if ($PackageVersionPropsUrl) {
@@ -67,10 +67,10 @@ try {
         $PropsFilePath = Join-Path $IntermediateDir 'external-dependencies.props'
         New-Item -ItemType Directory $IntermediateDir -ErrorAction Ignore | Out-Null
         Get-RemoteFile "${PackageVersionPropsUrl}${AccessTokenSuffix}" $PropsFilePath
-        $msbuildArgs += "-p:DotNetPackageVersionPropsPath=$PropsFilePath"
+        $MSBuildArguments += "-p:DotNetPackageVersionPropsPath=$PropsFilePath"
     }
 
-    $msbuildArgs += '-t:Build'
+    $MSBuildArguments += '-t:Build'
 
     Invoke-Block { & $msbuild `
             WindowsInstallers.proj `
@@ -85,7 +85,7 @@ try {
             "-p:Configuration=$Configuration" `
             "-p:BuildNumber=$BuildNumber" `
             "-bl:$repoRoot/artifacts/logs/installers.msbuild.binlog" `
-            @msbuildArgs
+            @MSBuildArguments
     }
 }
 finally {

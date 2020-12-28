@@ -220,9 +220,7 @@ if (!$ToolsSource) { $ToolsSource = 'https://aspnetcore.blob.core.windows.net/bu
 
 [string[]] $ProdConArgs = @()
 
-Write-Output "About to check for URL"
 if ($PackageVersionPropsUrl) {
-    Write-Output "We have URL"
     $IntermediateDir = Join-Path $PSScriptRoot 'obj'
     $PropsFilePath = Join-Path $IntermediateDir 'external-dependencies.props'
     New-Item -ItemType Directory $IntermediateDir -ErrorAction Ignore | Out-Null
