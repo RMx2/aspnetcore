@@ -43,7 +43,7 @@ __usage() {
     echo "    --lockfile <PATH>                         The path to the korebuild-lock.txt file. Defaults to \$repo_path/korebuild-lock.txt"
     echo "    -s|--tools-source|-ToolsSource <URL>      The base url where build tools can be downloaded. Overrides the value from the config file."
     echo "    --package-version-props-url <URL>         The url of the package versions props path containing dependency versions."
-    echo "    --access-token <Token>                    The query string to append to any blob store access for PackageVersionPropsUrl, if any."
+    echo "    --access-token-suffix <Token>             The query string to append to any blob store access for PackageVersionPropsUrl, if any."
     echo "    --restore-sources <Sources>               Semi-colon delimited list of additional NuGet feeds to use as part of restore."
     echo "    --product-build-id <ID>                   The product build ID for correlation with orchestrated builds."
     echo "    -u|--update                               Update to the latest KoreBuild even if the lock file is present."
@@ -191,6 +191,24 @@ while [[ $# -gt 0 ]]; do
             [ -z "${1+x}" ] && __error "Missing value for parameter --package-version-props-url" && __usage
             package_version_props_url="$1"
             ;;
+        --access-token-suffix|-AccessTokenSuffix)
+            shift
+            # This parameter can be an empty string, but it should be set
+            [ -z "${1+x}" ] && __error "Missing value for parameter --access-token-suffix" && __usage
+            access_token_suffix="$1"
+            ;;
+        --restore-sources|-RestoreSources)
+            shift
+            # This parameter can be an empty string, but it should be set
+            [ -z "${1+x}" ] && __error "Missing value for parameter --restore-sources" && __usage
+            restore_sources="$1"
+            ;;
+        --asset-root-url|-AssetRootUrl)
+            shift
+            # This parameter can be an empty string, but it should be set
+            [ -z "${1+x}" ] && __error "Missing value for parameter --asset-root-url" && __usage
+            asset_root_url="$1"
+            ;;
         -u|--update|-Update)
             update=true
             ;;
@@ -258,7 +276,7 @@ if [ ! -z "$package_version_props_url" ]; then
     intermediate_dir="$repo_path/obj"
     props_file_path="$intermediate_dir/external-dependencies.props"
     mkdir -p "$intermediate_dir"
-    __get_remote_file "$package_version_props_url" "$props_file_path" "${PB_ACCESSTOKENSUFFIX:-}"
+    __get_remote_file "$package_version_props_url" "$props_file_path" "$access_token_suffix"
     prodcon_args[${#prodcon_args[*]}]="-p:DotNetPackageVersionPropsPath=$props_file_path"
 fi
 
@@ -270,13 +288,19 @@ if [ ! -z "$product_build_id" ]; then
     prodcon_args[${#prodcon_args[*]}]="-p:DotNetProductBuildId=$product_build_id"
 fi
 
+if [ ! -z "$restore_sources" ]; then
+    prodcon_args[${#prodcon_args[*]}]="-p:DotNetAdditionalRestoreSources=$restore_sources"
+fi
+
+if [ ! -z "$access_token_suffix" ]; then
+    prodcon_args[${#prodcon_args[*]}]="-p:DotNetAssetRootAccessTokenSuffix=$access_token_suffix"
+fi
+
 # PipeBuild parameters
-prodcon_args[${#prodcon_args[*]}]="-p:DotNetAdditionalRestoreSources=${PB_RESTORESOURCE:-}"
 prodcon_args[${#prodcon_args[*]}]="-p:PublishBlobFeedUrl=${PB_PUBLISHBLOBFEEDURL:-}"
 prodcon_args[${#prodcon_args[*]}]="-p:PublishType=${PB_PUBLISHTYPE:-}"
 prodcon_args[${#prodcon_args[*]}]="-p:SkipTests=${PB_SKIPTESTS:-}"
 prodcon_args[${#prodcon_args[*]}]="-p:IsFinalBuild=${PB_ISFINALBUILD:-}"
-prodcon_args[${#prodcon_args[*]}]="-p:DotNetAssetRootAccessTokenSuffix=${PB_ACCESSTOKENSUFFIX:-}"
 
 [ -z "$lockfile_path" ] && lockfile_path="$repo_path/korebuild-lock.txt"
 [ -z "$channel" ] && channel='master'

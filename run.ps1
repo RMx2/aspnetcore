@@ -239,16 +239,21 @@ if ($Projects) {
     $MSBuildArguments += "-p:_ProjectsOnly=true"
 }
 
+if ($AssetRootUrl) {
+    $ProdConArgs += "-p:DotNetAssetRootUrl=$AssetRootUrl"
+}
+
+if ($RestoreSources) {
+    $ProdConArgs += "-p:DotNetAdditionalRestoreSources=$RestoreSources"
+}
+
 # PipeBuild parameters
-$ProdConArgs += "-p:DotNetAssetRootUrl=${env:PB_AssetRootUrl}"
-$ProdConArgs += "-p:DotNetAdditionalRestoreSources=${env:PB_RestoreSource}"
 $ProdConArgs += "-p:DotNetProductBuildId=${env:ProductBuildId}"
 $ProdConArgs += "-p:PublishBlobFeedUrl=${env:PB_PublishBlobFeedUrl}"
 $ProdConArgs += "-p:PublishType=${env:PB_PublishType}"
 $ProdConArgs += "-p:SkipTests=${env:PB_SkipTests}"
 $ProdConArgs += "-p:IsFinalBuild=${env:PB_IsFinalBuild}"
 $ProdConArgs += "-p:SignType=${env:PB_SignType}"
-$ProdConArgs += "-p:PublishBlobFeedKey=${env:PB_PublishBlobFeedKey}"
 
 # Execute
 
